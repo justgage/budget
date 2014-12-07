@@ -40,7 +40,9 @@ defmodule Budget do
   end
 
   def add(name, amount, disc \\ "") do
-    line = Float.to_string(amount, decimals: 2) <> "\t" <> disc <> "\n";
+    use Timex
+    date = DateFormat.format!(Date.now, "%Y-%m-%d", :strftime)
+    line = Float.to_string(amount, decimals: 2) <> "\t" <> disc <> "\t" <> date <> "\n";
     append(name, line)
   end
 

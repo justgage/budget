@@ -30,6 +30,8 @@ defmodule Budget.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    []
+    [
+      {:timex, "~> 0.13.2"}
+    ]
   end
 end
