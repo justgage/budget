@@ -79,7 +79,7 @@ defmodule Budget do
     $ budget add name amount [details] (eg: $budget add gage 12 \"got paid\")
       'adds an expense to the budget'
 
-    $ budget show name
+    $ budget bal name
       'shows `name`s current balence'
 
     $ budget log name
@@ -90,10 +90,15 @@ defmodule Budget do
     "
   end
 
+  defp string_to_float(string) do
+    {ret, _} = Float.parse(string)
+    ret
+  end
+
   defp add_parse(details) do
     case details do
-     [name, amount, disc] -> add name, amount, disc
-     [name, amount]       -> add name, amount
+     [name, amount, disc] -> add name, string_to_float(amount), disc
+     [name, amount]       -> add name, string_to_float(amount)
      _                    -> IO.puts "Wrong number of arguments, expecting `name amount [description]`"
     end
   end
@@ -103,12 +108,12 @@ defmodule Budget do
     case command do
       "help" -> help
       "add"  -> add_parse(details)
+      "bal"  -> print(List.first(details), :balence)
       _      -> IO.puts "\"" <> command <> "\" is not a recognized command, type `$ budget help` to get a list of commands"
     end
   end
 
   def main(args) do
-    IO.puts "Welcome to budget!" 
     case args do
       [head | tail] -> parse(head, tail)
       []            -> help
