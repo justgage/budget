@@ -17,8 +17,9 @@ defmodule Budget.Mixfile do
   end
 
   def escript do
-    [ main_module: Budget, embeded_elixir: true ]
+    [ main_module: Cli, embeded_elixir: true ]
   end
+
 
   # Dependencies can be Hex packages:
   #

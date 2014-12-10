@@ -39,13 +39,21 @@ defmodule Budget do
     File.write(filename(name), lines, [:append])
   end
 
+  @doc """
+  Will add an ammount to a budget, use negitive numbers for taking away
+  """
   def add(name, amount, disc \\ "") do
     use Timex
     date = DateFormat.format!(Date.now, "%Y-%m-%d", :strftime)
     line = Float.to_string(amount, decimals: 2) <> "\t" <> disc <> "\t" <> date <> "\n";
     append(name, line)
+    print(name, :balence)
   end
 
+
+  @doc """
+  This will print out various things about the budget
+  """
   def print(name, what) do
     init()
     init_file(name)
@@ -53,7 +61,7 @@ defmodule Budget do
     {:ok, file} = File.open(filename(name), [:read])
 
     case what do
-      :balence -> IO.puts sum_file(file)
+      :balence -> IO.puts(name <> " has $" <> sum_file(file))
       #:recent  -> 
         _   -> print(name, :balence)
     end
@@ -75,50 +83,4 @@ defmodule Budget do
     String.to_float num
   end
 
-  def help do
-    IO.puts "Help: 
-    COMMANDS:
-    $ budget add name amount [details] (eg: $budget add gage 12 \"got paid\")
-      'adds an expense to the budget'
-
-    $ budget bal name
-      'shows `name`s current balence'
-
-    $ budget log name
-      'shows a log of recent expenses from `name`'
-      
-    $ budget help 
-      'shows this help text'
-    "
-  end
-
-  defp string_to_float(string) do
-    {ret, _} = Float.parse(string)
-    ret
-  end
-
-  defp add_parse(details) do
-    case details do
-     [name, amount, disc] -> add name, string_to_float(amount), disc
-     [name, amount]       -> add name, string_to_float(amount)
-     _                    -> IO.puts "Wrong number of arguments, expecting `name amount [description]`"
-    end
-  end
-
-  defp parse(command, details) do
-    command = String.downcase(command)
-    case command do
-      "help" -> help
-      "add"  -> add_parse(details)
-      "bal"  -> print(List.first(details), :balence)
-      _      -> IO.puts "\"" <> command <> "\" is not a recognized command, type `$ budget help` to get a list of commands"
-    end
-  end
-
-  def main(args) do
-    case args do
-      [head | tail] -> parse(head, tail)
-      []            -> help
-    end     
-  end
 end
