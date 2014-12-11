@@ -1,7 +1,7 @@
 defmodule BudgetTest do
   use ExUnit.Case
 
-  test "the truth" do
-    assert 1 + 1 == 2
+  test "filename works" do
+    Budget.
   end
 end

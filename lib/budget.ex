@@ -1,4 +1,12 @@
+
 defmodule Budget do
+  @moduledoc """
+  #Budget 
+  This is a module that handles interacting with the file system of
+  the budgeting application. 
+  """
+
+  # Private --------
 
   @path "~/.budget/"
   defp path do
@@ -6,7 +14,11 @@ defmodule Budget do
   end
 
   defp filename(name) do
-    Path.expand(@path <> name <> ".bud")
+    name = name 
+            |> String.downcase 
+            |> String.replace(" ","-")
+
+    Path.expand(@path <> name <> "")
   end
 
   defp init do
@@ -16,38 +28,76 @@ defmodule Budget do
   end
 
   defp init_file(name) do
-    if File.exists?(filename(name)) == false do
-      File.touch(filename(name))
+    name = filename(name)
+
+    if File.exists?(name) == false do
+      File.touch(name)
     end
   end
 
-  def load(name) do
-
-    init()
-    init_file(name)
-
-    case File.read(filename(name)) do
-      {:ok, contents} -> contents
-      {:error, err} -> err
-    end
+  defp sum_file(name) do
+    load(name) 
+    |> Enum.map(&extract_amount/1)
+    |> List.foldr(0.0, &+/2)
   end
 
 
-  def append(name, lines) do
+  # This will extract all the info from a date
+  defp extract_line(line) do
+    use Timex
+
+    [amount, date, disc] = String.split line, "|"
+
+    amount = String.to_float(amount)
+
+    {:ok, date} = DateFormat.parse(date, "%Y-%m-%d", :strftime)
+
+    {amount, date, disc}
+  end
+
+  defp extract_amount(line) do
+    {amount, _, _} = line
+
+    amount
+  end
+
+
+  defp append(name, lines) do
     init()
     init_file(name)
     File.write(filename(name), lines, [:append])
   end
 
+
+  defp print_sum(name) do
+    amount = sum_file(name) |> Float.to_string(decimals: 2)
+    mess = name <> " has $" <> amount
+    IO.puts(mess)
+  end
+
+  # Public ------
+
   @doc """
-  Will add an ammount to a budget, use negitive numbers for taking away
+  Will add an amount of money to a budget
   """
   def add(name, amount, disc \\ "") do
     use Timex
     date = DateFormat.format!(Date.now, "%Y-%m-%d", :strftime)
-    line = Float.to_string(amount, decimals: 2) <> "\t" <> disc <> "\t" <> date <> "\n";
+    line = Float.to_string(amount, decimals: 2) <> "|" <> date <> "|" <> disc <> "\n";
     append(name, line)
     print(name, :balence)
+  end
+
+
+  @doc """
+  This will remove an amount of money from a budget
+  """
+  def remove(name, amount, disc \\ "") do
+    add(name, -amount, disc)
+  end
+
+  def log(name, amount) do
+    load(name) |> Enum.reverse |> Enum.take(amount)
   end
 
 
@@ -58,29 +108,47 @@ defmodule Budget do
     init()
     init_file(name)
 
-    {:ok, file} = File.open(filename(name), [:read])
-
     case what do
-      :balence -> IO.puts(name <> " has $" <> sum_file(file))
-      #:recent  -> 
-        _   -> print(name, :balence)
-    end
-
-    File.close(file)
-  end
-
-
-  defp sum_file(file, sum \\ 0) do
-    case IO.read(file, :line) do
-      :eof -> sum
-      data -> sum + sum_file(file, extract_sum data)
+      :balence -> print_sum(name)
+      :log     -> print_log(name, 10)
+      _        -> print(name, :balence)
     end
   end
 
-  defp extract_sum(line) do
-    [num | _] = String.split line, "\t", parts: 2
 
-    String.to_float num
+  defp print_log(name, num) do
+    log(name, num)
+    |> List.foldr("\n", &<>/2)
+    |> String.replace("|", "\t", global: true)
+    |> IO.puts
+  end
+
+  @doc """
+  Will list the names of budgets available
+  todo:
+  - Make this more general
+  """
+  def list do
+    IO.puts "Here's a list of budgets:"
+    {:ok, files}= File.ls(path())
+    str = files 
+          |> Enum.map(fn(item) -> " - " <> item <> "\n" end)
+          |> List.foldr("", &<>/2)
+  end 
+
+  @doc """
+  This will load the information from the file
+  """
+  def load(name) do
+    init()
+    init_file(name)
+
+    if File.exists? filename(name) do
+      filename(name) 
+      |> File.stream!
+      |> Enum.to_list
+      |> Enum.map &extract_line/1
+    end
   end
 
 end

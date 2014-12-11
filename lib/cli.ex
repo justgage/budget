@@ -28,6 +28,7 @@ defmodule Cli do
       "help" -> help
       "add"  -> add_parse(details)
       "bal"  -> Budget.print(List.first(details), :balence)
+      "log"  -> Budget.print(List.first(details), :log)
       _      -> IO.puts helptext
     end
   end
