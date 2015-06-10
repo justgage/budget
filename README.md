@@ -5,6 +5,4 @@ A simple command line budgeting program that helps me to learn [Elixir](elixir-l
 
 # Building
 
-There's a binary included for 64bit linux, but you can build one for your system if you have `elixir` installed and run `mix escript.build`
-
-NOTE: this requires the Erlang runtime.
+you can build a binary for your system if you have `elixir` installed and run `mix escript.build` (I'm assuming you have Elixir installed), just note that binaries will still not run without the Erlang vm installed (this should be there if you installed Elixir).
